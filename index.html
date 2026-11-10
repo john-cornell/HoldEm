@@ -49,13 +49,17 @@
   .seat .chipstack { justify-content: center; margin-top: 3px; min-height: 22px; }
   #player-panel .chipstack { min-height: 22px; }
   .fly-chip { position: fixed; z-index: 45; transition: all .8s cubic-bezier(.3,.7,.4,1); }
+  /* active player glow */
+  .glow-ring { box-shadow: 0 0 0 4px #ffd23f, 0 0 18px 6px rgba(255,210,63,.6) !important; }
+  /* confetti */
+  .confetti { position: fixed; top: -20px; z-index: 44; font-size: 22px; pointer-events: none; }
   /* CARDS — chubby style */
   .card {
     width: 62px; height: 88px; border-radius: 12px; background: #fff;
     border: 3px solid #333; box-shadow: 0 4px 0 rgba(0,0,0,.35);
     color: #333;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-weight: bold; animation: pop .35s cubic-bezier(.2,1.6,.4,1);
+    font-weight: bold; animation: flipIn .35s cubic-bezier(.2,1.6,.4,1);
     position: relative;
   }
   .card .rank { font-size: 26px; line-height: 1; }
@@ -70,6 +74,11 @@
   .card.small .suit { font-size: 18px; }
   @keyframes pop { 0% { transform: scale(.3) rotate(-15deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
   @keyframes popC { 0% { transform: translateX(-50%) scale(.3) rotate(-15deg); opacity: 0; } 100% { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; } }
+  @keyframes flipIn { 0% { transform: perspective(300px) rotateY(90deg); opacity: .4; } 100% { transform: perspective(300px) rotateY(0); opacity: 1; } }
+  @keyframes glowpulse {
+    0%,100% { box-shadow: 0 0 0 4px #ffd23f, 0 5px 0 rgba(0,0,0,.3); }
+    50% { box-shadow: 0 0 0 8px #ffd23f, 0 0 22px 8px rgba(255,210,63,.55), 0 5px 0 rgba(0,0,0,.3); }
+  }
   .hole-cards { display: flex; gap: 5px; }
 
   /* SEATS */
@@ -86,7 +95,7 @@
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 5px 0 rgba(0,0,0,.3); position: relative;
   }
-  .seat.active .avatar { animation: wobble 0.7s ease-in-out infinite; box-shadow: 0 0 0 5px #ffd23f, 0 5px 0 rgba(0,0,0,.3); }
+  .seat.active .avatar { animation: wobble 0.7s ease-in-out infinite, glowpulse 1.2s ease-in-out infinite; }
   .seat.folded { opacity: .35; filter: grayscale(1); }
   .seat.out .avatar { filter: grayscale(1) brightness(.5); }
   @keyframes wobble { 0%,100% { transform: rotate(-3deg);} 50% { transform: rotate(3deg) scale(1.06);} }
@@ -459,6 +468,13 @@ function startHand(){
   clearTimers();
   document.getElementById('banner').classList.remove('show');
   document.getElementById('controls').innerHTML='';
+  // rising blinds every 8 hands
+  G.handCount = (G.handCount||0) + 1;
+  if (G.handCount>1 && (G.handCount-1)%8===0){
+    G.smallBlind*=2; G.bigBlind*=2;
+    log(`⏫ Blinds up! Now ${G.smallBlind}/${G.bigBlind} 🍪`);
+    SFX.allin();
+  }
   G.deck = newDeck(); G.community=[]; G.pot=0; G.currentBet=0; G.minRaise=G.bigBlind; G.round='preflop'; G.matchedLevel=0; G.handWin=false; G.handLose=false;
   G.players.forEach(p=>{ p.bet=0; p.folded=false; p.allin=false; p.hole=[]; p.last=''; p.contrib=0; p.quip=null; });
   G.players.forEach(p=>{ if (p.stack<=0){ p.out=true; } });
@@ -578,6 +594,7 @@ function doAction(p, act, amt){
     if (p.allin) SFX.allin(); else SFX.chips();
   }
   if (p.human) G.players.forEach(q=>q.quip=null); // after I play: clear everyone's bubbles
+  chipsToPot(p);
   render();
   if (countInHand()===1){ awardPot([G.players.find(inHand)], 'Everyone folded!'); return; }
   saveGame();
@@ -720,6 +737,7 @@ function showdown(){
     const bw = mainPot.eligible.filter(p=>cmpEval(evals.get(p), best)===0);
     if (bw.some(w=>w.human)){ G.handWin = true; G.handLose = false; }
     else if (inHand(me)) SFX.lose();
+    if (best[0]>=6 && bw.some(w=>w.human)) confettiBurst(26);
     winBanner(bw, CAT_NAMES[best[0]], bw[0].hole, best5([...bw[0].hole, ...G.community]));
   } else {
     winBanner(contenders, null, contenders[0].hole, null);
@@ -753,33 +771,65 @@ function checkGameEnd(){
   return false;
 }
 
+function flyChips(fromRect, toRect, n, delay=0){
+  for (let k=0;k<n;k++){
+    const chip = document.createElement('div');
+    chip.className = 'fly-chip';
+    chip.style.width='20px'; chip.style.height='20px'; chip.style.borderRadius='50%';
+    chip.style.background = k%3===1 ? 'radial-gradient(circle at 35% 30%, #90caf9, #42a5f5 60%, #1565c0)' : 'radial-gradient(circle at 35% 30%, #ff9f81, #ff7043 60%, #e64a19)';
+    chip.style.border='3px dashed #fff'; chip.style.boxShadow='0 2px 0 rgba(0,0,0,.35)';
+    chip.style.left = (fromRect.left + fromRect.width/2 - 10) + 'px';
+    chip.style.top = (fromRect.top + fromRect.height/2 - 10) + 'px';
+    document.body.appendChild(chip);
+    setTimeout(()=>{
+      chip.style.left = (toRect.left + toRect.width/2 - 10) + 'px';
+      chip.style.top = (toRect.top + toRect.height/2 - 10) + 'px';
+      chip.style.opacity = '0.15';
+    }, 40 + delay + k*70);
+    setTimeout(()=>chip.remove(), 1000 + delay + k*70);
+  }
+}
+
+function seatRect(p){
+  const el = p.human ? document.getElementById('me-avatar') : document.getElementById('av-'+G.players.indexOf(p));
+  return el ? el.getBoundingClientRect() : null;
+}
+
+function chipsToPot(p){
+  if (!p || p.bet<=0) return;
+  const potEl = document.querySelector('.pot-chip');
+  const from = seatRect(p);
+  if (!potEl || !from) return;
+  flyChips(from, potEl.getBoundingClientRect(), Math.min(5, 1+Math.floor(p.bet/(G.bigBlind*2))));
+}
+
 function flyChipsToWinners(winners){
   const potEl = document.querySelector('.pot-chip');
   if (!potEl) return;
   const from = potEl.getBoundingClientRect();
   winners.forEach((w, i)=>{
-    const targetEl = w.human ? document.getElementById('me-avatar') : document.getElementById('av-'+G.players.indexOf(w));
-    if (!targetEl) return;
-    const to = targetEl.getBoundingClientRect();
-    const n = 4;
-    for (let k=0;k<n;k++){
-      const chip = document.createElement('div');
-      chip.className = 'fly-chip ' + (w.human ? '' : 'chip ' + (k%3===1?'blue':''));
-      if (!w.human){ chip.style.position='fixed'; } else chip.classList.add('chip');
-      chip.style.width='20px'; chip.style.height='20px'; chip.style.borderRadius='50%';
-      chip.style.background = k%3===1 ? 'radial-gradient(circle at 35% 30%, #90caf9, #42a5f5 60%, #1565c0)' : 'radial-gradient(circle at 35% 30%, #ff9f81, #ff7043 60%, #e64a19)';
-      chip.style.border='3px dashed #fff'; chip.style.boxShadow='0 2px 0 rgba(0,0,0,.35)';
-      chip.style.left = (from.left + from.width/2 - 10) + 'px';
-      chip.style.top = (from.top + from.height/2 - 10) + 'px';
-      document.body.appendChild(chip);
-      setTimeout(()=>{
-        chip.style.left = (to.left + to.width/2 - 10) + 'px';
-        chip.style.top = (to.top + to.height/2 - 10) + 'px';
-        chip.style.opacity = '0.1';
-      }, 60 + i*150 + k*70);
-      setTimeout(()=>chip.remove(), 1400 + i*150 + k*70);
-    }
+    const to = seatRect(w);
+    if (!to) return;
+    flyChips(from, to, 4, i*150);
   });
+}
+
+function confettiBurst(count){
+  const emojis = ['🎉','✨','🍩','🍪','⭐','💥','🎊'];
+  for (let i=0;i<count;i++){
+    const e = document.createElement('div');
+    e.className = 'confetti';
+    e.textContent = rand(emojis);
+    e.style.left = Math.random()*100 + 'vw';
+    e.style.fontSize = (14+Math.random()*20) + 'px';
+    e.style.opacity = '1';
+    document.body.appendChild(e);
+    const fall = e.animate([
+      { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+      { transform: `translateY(105vh) rotate(${360+Math.random()*360}deg)`, opacity: 0.6 }
+    ], { duration: 1600+Math.random()*1600, easing: 'cubic-bezier(.3,.5,.6,1)' });
+    fall.onfinish = ()=>e.remove();
+  }
 }
 
 function winBanner(winners, desc, holeCards, comboCards){
@@ -861,6 +911,28 @@ function gameOver(){
     ? 'You cleaned out the whole table. The cookies are yours! 🍪'
     : 'Out of cookies. The table ate you alive... 🍪🫥';
   es.style.display = 'flex';
+  if (won) confettiBurst(50);
+  // table progression: advance to tougher table with bigger blinds
+  if (won){
+    const next = document.createElement('button');
+    next.className = 'cute'; next.id = 'end-btn2';
+    next.style.cssText = 'font-size:20px;padding:12px 36px;background:#42a5f5;margin-top:12px;';
+    next.textContent = `⬆ Table ${G.tableLevel||1 + 1}`;
+    next.textContent = `⬆ Table ${(G.tableLevel||1)+1} — blinds ×${Math.pow(2,(G.tableLevel||1))}, hard AI`;
+    next.onclick = () => {
+      es.style.display='none';
+      document.getElementById('menu').style.display='none';
+      const carry = G.players[0].stack;
+      newGame(5, 'hard', Math.max(1000, carry));
+      G.tableLevel = (G.tableLevel||1)+1;
+      G.smallBlind = 10*Math.pow(2,G.tableLevel-1); G.bigBlind = 20*Math.pow(2,G.tableLevel-1);
+      G.speed = optState.speed; G.over = null; G.handWin=false; G.handLose=false;
+      setLiveSpeed(G.speed);
+      log(`— TABLE ${G.tableLevel}! Blinds ${G.smallBlind}/${G.bigBlind} 🍪 —`);
+      render(); startHand();
+    };
+    es.querySelector('.end-box').appendChild(next);
+  }
   document.getElementById('banner').classList.remove('show');
   document.getElementById('controls').innerHTML='';
   document.getElementById('end-btn').onclick = () => {
@@ -926,7 +998,7 @@ function render(){
   const meTurn = G.players[G.toAct]===me && countInHand()>1 && !me.folded;
   const db = G.dealer===G.players.indexOf(me) ? '<div class="dealer-btn">D</div>' : '';
   const bet = me.bet>0 ? `<span class="bet-chip">Bet: ${me.bet} 🍪</span>` : '';
-  const avatarStyle = meTurn ? 'box-shadow: 0 0 0 5px #ffd23f, 0 5px 0 rgba(0,0,0,.3); animation: wobble .7s ease-in-out infinite;' : (me.folded ? 'opacity:.45; filter:grayscale(1);' : '');
+  const avatarStyle = meTurn ? 'animation: wobble .7s ease-in-out infinite, glowpulse 1.2s ease-in-out infinite;' : (me.folded ? 'opacity:.45; filter:grayscale(1);' : '');
   const meOut = me.out ? 'filter:grayscale(1) brightness(.5); opacity:.6;' : '';
   const overCls = G.over==='win' || G.handWin ? ' win' : G.over==='lose' || G.handLose ? ' lose' : '';
   const overPanel = (G.over==='win' || G.handWin) ? 'over' : '';
