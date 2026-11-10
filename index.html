@@ -719,6 +719,7 @@ function showdown(){
     const best = evals.get(sorted[0]);
     const bw = mainPot.eligible.filter(p=>cmpEval(evals.get(p), best)===0);
     if (bw.some(w=>w.human)){ G.handWin = true; G.handLose = false; }
+    else if (inHand(me)) SFX.lose();
     winBanner(bw, CAT_NAMES[best[0]], bw[0].hole, best5([...bw[0].hole, ...G.community]));
   } else {
     winBanner(contenders, null, contenders[0].hole, null);
@@ -852,6 +853,7 @@ function gameOver(){
   const won = alive(me) && G.players.filter(alive).length===1;
   G.over = won ? 'win' : 'lose';
   render();
+  if (won) SFX.win(); else SFX.lose();
   const es = document.getElementById('end-screen');
   document.getElementById('end-emoji').textContent = won ? '🏆' : '💀';
   document.getElementById('end-title').textContent = won ? 'CHAMPION!' : 'BUSTED!';
@@ -1014,6 +1016,16 @@ function resumeGame(){
 /* ---------- Speed controls ---------- */
 const liveSpeed = document.getElementById('speed-live');
 const liveSpeedVal = document.getElementById('speed-live-val');
+
+// sound toggle
+try { SFX.muted = localStorage.getItem('chubby_holdem_mute')==='1'; } catch(e){}
+const soundBtn = document.getElementById('sound-btn');
+soundBtn.textContent = SFX.muted ? '🔇' : '🔊';
+soundBtn.onclick = () => {
+  SFX.muted = !SFX.muted;
+  soundBtn.textContent = SFX.muted ? '🔇' : '🔊';
+  try { localStorage.setItem('chubby_holdem_mute', SFX.muted?'1':'0'); } catch(e){}
+};
 function speedLabel(v){ return v<=1 ? 'normal' : v+'× slower'; }
 function setLiveSpeed(v){
   v = Math.round(v*4)/4;
