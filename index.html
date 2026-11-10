@@ -911,7 +911,7 @@ function render(){
       : need===0 ? '✔ in'
       : `need ${need}`;
     rows += `<div class="${cls}"><span class="bg-name">${p.avatar} ${p.name}</span>
-      <span><span class="bg-bet">${p.bet>0?p.bet+' 🍪':'·'}</span> <span class="bg-need ${need===0?'ok':''}">${needTxt}</span></span></div>`;
+      <span><span class="bg-bet">${p.bet>0?p.bet+' 🍪':'·'}</span> <span class="bg-need ${need===0?'ok':''}">${needTxt}</span> <span style="opacity:.7">in:${p.contrib||0}</span></span></div>`;
   });
   let top;
   if (!inRound) top = `<div class="bg-current">Showdown — paying out</div>`;
