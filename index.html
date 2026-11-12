@@ -1094,7 +1094,7 @@ function addBannerClose(banner){
   if (banner.querySelector('.b-close')) return;
   const close = document.createElement('button');
   close.className = 'cute b-check b-close';
-  close.style.cssText = 'font-size:16px;padding:6px 20px;margin-top:6px;pointer-events:none;';
+  close.style.cssText = 'font-size:16px;padding:6px 20px;margin-top:6px;margin-left:16px;pointer-events:none;';
   close.textContent = 'Got it ✔';
   banner.appendChild(close);
 }
