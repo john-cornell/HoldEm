@@ -220,6 +220,52 @@
   #start-btn { font-size: 22px; padding: 12px 40px; background: #66bb6a; }
   #resume-btn { font-size: 18px; padding: 10px 28px; background: #42a5f5; margin-top: 14px; }
 
+  .name.clickable { cursor: pointer; }
+  .name.clickable:hover { color: #ffd23f; }
+
+  /* ARCHETYPE POPUP */
+  #arch-pop {
+    position: fixed; z-index: 45; pointer-events: none;
+    background: rgba(0,0,0,.88); color: #fff; border: 3px solid #ffd23f;
+    border-radius: 14px; padding: 10px 12px; width: 250px; font-size: 12.5px; line-height: 1.45;
+    box-shadow: 0 6px 0 rgba(0,0,0,.35); animation: pop .25s;
+  }
+  #arch-pop .ap-head { font-size: 15px; margin-bottom: 4px; }
+  #arch-pop .ap-desc { opacity: .95; }
+  #arch-pop .ap-tip { color: #ffd23f; margin-top: 4px; font-weight: bold; }
+  #arch-pop .ap-reads { margin-top: 6px; border-top: 1px dashed rgba(255,255,255,.25); padding-top: 5px; }
+
+  /* HELP */
+  #help-screen {
+    position: fixed; inset: 0; background: rgba(10,30,20,.94); z-index: 70;
+    display: none; align-items: center; justify-content: center;
+  }
+  .help-box {
+    background: #fff; color: #333; padding: 26px 30px; border-radius: 28px;
+    border: 6px solid #333; box-shadow: 0 10px 0 rgba(0,0,0,.4);
+    width: min(680px, 94vw); max-height: 88vh; overflow-y: auto;
+    animation: pop .35s cubic-bezier(.2,1.6,.4,1);
+  }
+  .help-box h2 { font-size: 30px; margin: 4px 0 10px; text-align: center; }
+  .help-box h3 { font-size: 20px; margin: 18px 0 6px; border-bottom: 3px solid #ffd23f; display: inline-block; padding-bottom: 2px; }
+  .help-box p, .help-box li { font-size: 14px; line-height: 1.5; }
+  .help-box ul { margin: 6px 0 10px; padding-left: 20px; }
+  .help-box li { margin-bottom: 4px; }
+  .help-box table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  .help-box th { text-align: left; background: #ffd23f; color: #5b3a00; padding: 6px 8px; }
+  .help-box th:first-child { border-radius: 8px 0 0 0; }
+  .help-box th:last-child { border-radius: 0 8px 0 0; }
+  .help-box td { padding: 6px 8px; border-bottom: 2px solid rgba(0,0,0,.07); vertical-align: top; line-height: 1.4; }
+  .help-box tr:last-child td { border-bottom: none; }
+  .help-box .help-close-row { text-align: center; margin-top: 16px; }
+  #help-close { font-size: 17px; padding: 9px 30px; background: #66bb6a; }
+  #help-btn { font-size: 15px; padding: 8px 22px; background: #42a5f5; }
+  #help-mini {
+    font-size: 16px; padding: 4px 10px; border-radius: 999px; border: 3px solid #333;
+    background: #42a5f5; color: #fff; cursor: pointer; font-weight: bold;
+    box-shadow: 0 3px 0 rgba(0,0,0,.35); font-family: inherit;
+  }
+
   /* END SCREEN */
   #end-screen {
     position: fixed; inset: 0; background: rgba(10,30,20,.94); z-index: 60;
@@ -286,6 +332,7 @@
     <input type="range" id="speed-live" min="1" max="4" step="0.25" value="1">
     <span class="val" id="speed-live-val">normal</span>
     <button id="sound-btn" title="Sound on/off">🔊</button>
+    <button id="help-mini" title="Help">❓</button>
   </div>
 </div>
 <div id="log"></div>
@@ -301,6 +348,70 @@
   </div>
 </div>
 
+<div id="help-screen">
+  <div class="help-box">
+    <h2>📖 How to Play</h2>
+
+    <h3>🍩 The Goal</h3>
+    <p>Win all the cookies. Every opponent you bust is gone for good, and when you clean out the whole table you advance to a tougher one with bigger blinds, keeping your winnings.</p>
+
+    <h3>🃏 A Hand, Step by Step</h3>
+    <ul>
+      <li>Everyone gets <b>2 hole cards</b> (face down). Two players post forced bets called the <b>small blind</b> and <b>big blind</b> to seed the pot. These rotate around the table each hand, and <b>double every 8 hands</b>.</li>
+      <li><b>Pre-flop:</b> first betting round.</li>
+      <li><b>Flop:</b> 3 shared cards hit the middle, then betting.</li>
+      <li><b>Turn:</b> a 4th shared card, then betting.</li>
+      <li><b>River:</b> the 5th shared card, final betting.</li>
+      <li><b>Showdown:</b> everyone left flips their cards. Best 5-card hand made from your 2 plus the 5 shared cards wins the pot. Or if everyone else folds, the last player standing takes it, no cards needed.</li>
+    </ul>
+
+    <h3>🕹️ Your Options Each Turn</h3>
+    <ul>
+      <li><b>Fold:</b> throw your hand away and sit out this one.</li>
+      <li><b>Check:</b> pass the action on (only when nobody has bet).</li>
+      <li><b>Call:</b> match the current bet to stay in.</li>
+      <li><b>Raise:</b> match it and add more. Use the slider to pick the size.</li>
+      <li><b>ALL-IN:</b> shove everything. If you run out of chips partway, side pots make sure you can still win what you paid for.</li>
+    </ul>
+
+    <h3>🏆 Hand Rankings (Best to Worst)</h3>
+    <p>Straight flush · Four of a kind · Full house · Flush · Straight · Three of a kind · Two pair · One pair · High card. Aces play high or low, so A-2-3-4-5 is the smallest straight.</p>
+
+    <h3>🧠 The CPUs Actually Think</h3>
+    <ul>
+      <li>They simulate hundreds of possible outcomes to estimate their true win chance before acting.</li>
+      <li><b>Position matters:</b> they play far more hands on the button and tighten up in early seats.</li>
+      <li><b>Bet size matters:</b> small bets get attacked, big bets get respect.</li>
+      <li><b>Draws matter:</b> flush and straight draws get bet as semi-bluffs.</li>
+      <li><b>They watch YOU:</b> how often you enter pots, fold to bets, and raise. Fold too much and they'll steal every hand. Call too much and they'll stop bluffing and only bet when strong.</li>
+    </ul>
+    <p><b>Difficulty</b> is how sharp their math is: <b>Easy</b> misjudges hands and rarely bluffs, <b>Medium</b> plays a solid honest game, <b>Hard</b> calculates accurately and fully exploits your habits.</p>
+
+    <h3>🎭 The Personalities</h3>
+    <p>Difficulty sets how <i>well</i> they play. Personality sets <i>how</i> they play. Every table mixes these styles:</p>
+    <table>
+      <tr><th>Character</th><th>Style</th><th>What they do</th><th>How to beat them</th></tr>
+      <tr><td><b>Bubbles</b> 🎢</td><td>Maniac</td><td>Raises constantly, bluffs way too much, plays too many hands</td><td>Call down lighter and let him bluff into your monsters</td></tr>
+      <tr><td><b>Sir Chompers</b> 🦈</td><td>Shark</td><td>Balanced tight-aggressive, sizes bets well, rarely makes mistakes</td><td>Stay unpredictable, trap him with slow-plays</td></tr>
+      <tr><td><b>Waffles</b> 🍪</td><td>Cookie Jar</td><td>Plays too many hands, almost never bluffs, calls bets she shouldn't</td><td>Never bluff her. Value bet huge, she will pay you off</td></tr>
+      <tr><td><b>Doctor Nibbles</b> 🎩</td><td>Trickster</td><td>Plays solid hands but bluffs extra. His raises are about 50/50 value vs bluff</td><td>Call down more than feels safe</td></tr>
+      <tr><td><b>Gronk</b> 🪨</td><td>Rock</td><td>Folds most hands, almost never bluffs, only bets with the nuts</td><td>Steal his blinds. If Gronk raises big, fold</td></tr>
+      <tr><td><b>Peaches</b> 🍪</td><td>Cookie Jar</td><td>Same recipe as Waffles: loose, passive, generous</td><td>Value bet, value bet, value bet</td></tr>
+    </table>
+    <p>Hover any player's name at the table to see their archetype. The CPUs track each other too, so the shark at your table knows better than to bluff into the cookie jar.</p>
+
+    <h3>💡 Tips</h3>
+    <ul>
+      <li>The <b>bet grid</b> (top left) shows what everyone has bet and who still owes chips.</li>
+      <li>The <b>pace slider</b> (bottom right) speeds the table up or slows it down.</li>
+      <li>Your game <b>auto-saves</b> after every move. Close the tab, come back, hit Resume.</li>
+      <li>Sir Chompers on Hard will humble you. Waffles on any difficulty will not.</li>
+    </ul>
+
+    <div class="help-close-row"><button class="cute" id="help-close">Got it! 🍪</button></div>
+  </div>
+</div>
+
 <div id="menu">  <div class="menu-box">
     <h1>🍩 Chubby Hold'em 🍩</h1>
     <p class="sub">The squishiest poker this side of the Mississippi</p>
@@ -313,6 +424,7 @@
     <div>Pace: <b id="speed-label">normal</b></div>
     <div class="opt-row"><input type="range" id="speed-slider" min="1" max="4" step="0.25" value="1" style="width:220px"></div>
     <button class="cute" id="start-btn">Let's Go! 🎰</button>
+    <div class="opt-row" style="margin:14px 0 0"><button class="cute" id="help-btn">How to Play 📖</button></div>
     <div id="resume-wrap"></div>
   </div>
 </div>
@@ -449,9 +561,10 @@ function cmpEval(a,b){
 
 /* ---------- Game state ---------- */
 function newGame(numOpp, diff, stack){
-  const players = [{ name:'You', avatar:'😎', stack, bet:0, folded:false, allin:false, human:true, hole:[], last:'', out:false }];
+  const players = [{ name:'You', avatar:'😎', stack, bet:0, folded:false, allin:false, human:true, hole:[], last:'', out:false, stats: freshStats() }];
   for (let i=0;i<numOpp;i++){
-    players.push({ name:NAMES[i], avatar:AVATARS[i], stack, bet:0, folded:false, allin:false, human:false, hole:[], last:'', out:false, skill:diff });
+    const arch = ARCHETYPES[NAME_ARCH[NAMES[i]]] || ARCHETYPES.shark;
+    players.push({ name:NAMES[i], avatar:AVATARS[i], stack, bet:0, folded:false, allin:false, human:false, hole:[], last:'', out:false, skill:diff, arch, stats: freshStats() });
   }
   G = {
     players, deck:[], community:[], pot:0, dealer: Math.floor(Math.random()*players.length),
@@ -476,8 +589,9 @@ function startHand(){
     SFX.allin();
   }
   G.deck = newDeck(); G.community=[]; G.pot=0; G.currentBet=0; G.minRaise=G.bigBlind; G.round='preflop'; G.matchedLevel=0; G.handWin=false; G.handLose=false;
-  G.players.forEach(p=>{ p.bet=0; p.folded=false; p.allin=false; p.hole=[]; p.last=''; p.contrib=0; p.quip=null; });
+  G.players.forEach(p=>{ p.bet=0; p.folded=false; p.allin=false; p.hole=[]; p.last=''; p.contrib=0; p.quip=null; p.vpipDone=false; p.stats = p.stats || freshStats(); });
   G.players.forEach(p=>{ if (p.stack<=0){ p.out=true; } });
+  G.players.forEach(p=>{ if (alive(p)) p.stats.hands++; });
   const playable = G.players.filter(alive);
   if (playable.length<2 || !alive(G.players[0])){
     clearSave(); render(); gameOver(); return;
@@ -573,6 +687,14 @@ function doAction(p, act, amt){
   if (G.players[G.toAct]!==p) return; // stale/double click guard
   G.toAct = -1; // lock: prevents duplicate actions from double clicks or stale timers
   const who = p.name;
+  // stats for AI reads
+  if (p.stats){
+    const s = p.stats;
+    if (G.round==='preflop'){
+      if (!p.vpipDone && (act==='call'||act==='raise')){ s.vpip++; if (act==='raise') s.pfr++; p.vpipDone=true; }
+    } else if (act==='raise') s.aggro++;
+    if (G.currentBet > p.bet){ s.faceBet++; if (act==='fold') s.foldBet++; }
+  }
   if (act==='fold'){ p.folded=true; p.last='fold'; say(p, rand(QUIPS.fold)); log(`${who} folds 👋`); SFX.fold(); }
   else if (act==='check'){ p.last='check'; say(p, rand(QUIPS.check)); log(`${who} checks ✔`); SFX.check(); }
     else if (act==='call'){
@@ -602,47 +724,184 @@ function doAction(p, act, amt){
   else { G.toAct=(G.players.indexOf(p)+1)%G.players.length; saveGame(); after(600*G.speed, nextTurn); }
 }
 
-/* ---------- CPU brain ---------- */
-function handStrength(p){
-  if (G.community.length>=3) {
-    const ev = evalHand([...p.hole, ...G.community]);
-    return ev[0]/8;
+/* ---------- CPU brain v2 ---------- */
+const FULL_DECK = [];
+for (const s of SUITS) for (const r of RANKS) FULL_DECK.push({r,s});
+
+const ARCHETYPES = {
+  rock:    { label:'Rock 🪨',       loose:-0.10, aggro:0.55, bluff:0.35, callBias:+0.06 },
+  station: { label:'Cookie Jar 🍪', loose:+0.10, aggro:0.50, bluff:0.45, callBias:-0.07 },
+  shark:   { label:'Shark 🦈',      loose: 0.00, aggro:1.00, bluff:1.00, callBias: 0.00 },
+  lag:     { label:'Maniac 🎢',     loose:+0.07, aggro:1.30, bluff:1.70, callBias:-0.02 },
+  trick:   { label:'Trickster 🎩',  loose:-0.03, aggro:0.95, bluff:1.35, callBias:-0.01 }
+};
+const NAME_ARCH = { Bubbles:'lag', 'Sir Chompers':'shark', Waffles:'station', 'Doctor Nibbles':'trick', Gronk:'rock', Peaches:'station' };
+
+function freshStats(){ return { hands:0, vpip:0, pfr:0, faceBet:0, foldBet:0, aggro:0 }; }
+
+/* true win probability via Monte Carlo (vs N random hands, full runout) */
+function estimateEquity(p, trials){
+  const used = new Set([...p.hole, ...G.community].map(c=>c.r+c.s));
+  const pool = FULL_DECK.filter(c=>!used.has(c.r+c.s));
+  const oppN = Math.max(1, countInHand()-1);
+  const needB = 5 - G.community.length;
+  let score = 0;
+  for (let t=0;t<trials;t++){
+    for (let i=0;i<oppN*2+needB;i++){
+      const j = i + Math.floor(Math.random()*(pool.length-i));
+      const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp;
+    }
+    const bc = needB ? pool.slice(0,needB).concat(G.community) : G.community;
+    const my = evalHand(p.hole.concat(bc));
+    let best=null, ties=0;
+    for (let o=0;o<oppN;o++){
+      const ev = evalHand([pool[needB+2*o], pool[needB+2*o+1]].concat(bc));
+      if (!best){ best=ev; ties=1; continue; }
+      const c = cmpEval(ev, best);
+      if (c>0){ best=ev; ties=1; } else if (c===0) ties++;
+    }
+    const c = cmpEval(my, best);
+    score += c>0 ? 1 : c===0 ? 1/(ties+1) : 0;
   }
-  const [a,b] = p.hole.map(c=>RANKS.indexOf(c.r)+2).sort((x,y)=>y-x);
-  let s = (a+ b)/28;
-  if (a===b) s = Math.min(1, 0.45 + a/30);
-  if (a===14||b===14) s+=0.08;
-  return Math.min(1, s);
+  return score/trials;
+}
+
+/* position relative to the button */
+function positionOf(p){
+  const n = G.players.length;
+  const off = (n + G.players.indexOf(p) - G.dealer) % n;
+  if (n===2) return off===0 ? 'btn' : 'bb';
+  if (off===0) return 'btn';
+  if (off===1) return 'sb';
+  if (off===2) return 'bb';
+  const fromEnd = n-1-off;              // 0 = cutoff
+  if (fromEnd===0) return 'cut';
+  if (fromEnd<=2) return 'late';
+  return 'early';
+}
+const POS_EQ  = { btn:0.09, cut:0.06, late:0.03, early:-0.05, sb:0.02, bb:0.00 };
+const POS_AGG = { btn:1.35, cut:1.20, late:1.10, early:0.85, sb:1.00, bb:1.00 };
+
+/* draw detection: flush draws & straight draws involving our hole cards */
+function countOuts(p){
+  if (G.community.length<3) return 0;
+  const cards = [...p.hole, ...G.community];
+  let outs = 0;
+  const bySuit = {};
+  cards.forEach(c=>{ (bySuit[c.s]=bySuit[c.s]||[]).push(c); });
+  for (const s in bySuit){
+    if (bySuit[s].length===4 && bySuit[s].some(c=>p.hole.includes(c))) outs = Math.max(outs, 9);
+  }
+  const ranks = new Set(cards.map(c=>RANKS.indexOf(c.r)+2));
+  for (let lo=2; lo<=11; lo++){
+    let run=0, hasHole=false;
+    for (let v=lo; v<lo+4; v++){
+      if (ranks.has(v)){ run++; if (p.hole.some(h=>RANKS.indexOf(h.r)+2===v)) hasHole=true; }
+    }
+    if (run===4 && hasHole) outs = Math.max(outs, (lo>=3&&lo<=10) ? 8 : 5);
+  }
+  if (ranks.has(14)&&ranks.has(2)&&ranks.has(3)&&ranks.has(4)
+      && p.hole.some(h=>{const v=RANKS.indexOf(h.r)+2; return v<=4||v===14;})) outs = Math.max(outs, 4);
+  return outs;
+}
+
+/* reads: exploit opponent tendencies (VPIP, fold-to-bet) */
+function oppRead(p){
+  const agg = G.lastRaiser>=0 ? G.players[G.lastRaiser] : null;
+  const others = G.players.filter(q=>q!==p && inHand(q) && q.stats && q.stats.hands>=4);
+  const candidates = (agg && agg!==p && inHand(agg) && agg.stats && agg.stats.hands>=4) ? [agg] : others;
+  if (!candidates.length) return { vpip:null, foldBet:null };
+  let vpip=0, fb=0;
+  candidates.forEach(q=>{ vpip += q.stats.vpip/q.stats.hands; fb += q.stats.faceBet ? q.stats.foldBet/q.stats.faceBet : 0.4; });
+  return { vpip: vpip/candidates.length, foldBet: fb/candidates.length };
+}
+
+function decide(p){
+  const arch = p.arch || ARCHETYPES.shark;
+  const skill = p.skill || 'medium';
+  const trials = { easy:70, medium:180, hard:380 }[skill] || 180;
+  const err = { easy:0.20, medium:0.09, hard:0.035 }[skill] || 0.12;
+
+  const preflop = G.round==='preflop';
+  const pos = positionOf(p);
+  let perceived = estimateEquity(p, trials)
+    + (Math.random()*2-1)*err
+    + arch.loose*(preflop?1:0.4)
+    + POS_EQ[pos]*(preflop?1:0.4);
+  const semiBluff = !preflop && countOuts(p)>=8;
+
+  const read = oppRead(p);
+  let bluffScale = 1, respect = 0;
+  if (read.vpip!=null){
+    if (read.vpip>0.45) bluffScale *= 0.4;       // station: don't bluff
+    else if (read.vpip<0.25) bluffScale *= 1.7;  // nit: bluff away
+    if (read.foldBet!=null){
+      if (read.foldBet>0.55) bluffScale *= 1.5;  // folds to bets
+      else if (read.foldBet<0.25) bluffScale *= 0.45;
+      respect = (read.foldBet<0.3 ? 0.04 : 0) + (read.vpip<0.25 ? 0.03 : 0);
+    }
+  }
+  respect = Math.min(0.08, respect * (skill==='hard'?1:skill==='medium'?0.6:0.3));
+  perceived -= respect;
+
+  const need = Math.max(0, G.currentBet - p.bet);
+  const pot = G.pot;
+  const canCheck = need===0;
+  const canRaise = p.bet + p.stack > G.currentBet;
+  const r = need>0 ? need/(pot+need) : 0;        // equity needed to call
+  const shortStacked = p.stack <= 10*G.bigBlind;
+
+  const baseBluff = { easy:0.05, medium:0.11, hard:0.17 }[skill] || 0.11;
+  let bluffP = Math.max(0, Math.min(0.35, baseBluff * arch.bluff * bluffScale * POS_AGG[pos]));
+
+  const valueRaiserP = () => Math.min(0.92, (perceived-0.52)*1.9*arch.aggro*POS_AGG[pos]);
+  const pickFrac = () => {
+    if (perceived>0.85 && Math.random()<0.15) return 2.0;   // occasional overbet
+    const fr = perceived>0.72 ? [0.75,1,1.5] : [0.5,0.66,0.75];
+    return fr[Math.floor(Math.random()*fr.length)];
+  };
+  const raiseTo = frac => {
+    const add = Math.max(G.minRaise, Math.round((frac*(pot+need))/G.smallBlind)*G.smallBlind);
+    return Math.min(p.bet + p.stack, G.currentBet + add);
+  };
+
+  let act='check', amt=0;
+  if (canCheck){
+    if (perceived>0.62 && Math.random()<valueRaiserP()){
+      act='raise'; amt = raiseTo(pickFrac());
+    } else if (perceived>0.88 && Math.random()<0.15){
+      act='check';                                            // trap with monsters
+    } else if (canRaise && Math.random()<bluffP*(semiBluff?1.6:1)){
+      act='raise'; amt = raiseTo(preflop?1:0.6);
+    }
+  } else {
+    const margin = perceived - r - arch.callBias;
+    let callP = Math.max(0.05, Math.min(0.95, 0.5 + margin*2.6));
+    if (r>0.6) callP *= 0.75;                                 // big bets demand equity
+    if (need>=p.stack) callP = perceived > r + 0.02 ? 0.95 : 0.05;  // facing all-in
+    let raiseP = 0;
+    if (canRaise){
+      raiseP = (perceived>0.68 ? (perceived-0.6)*2*arch.aggro : 0)
+             + (Math.random()<bluffP ? bluffP*(r<0.3?1.5:0.6) : 0);
+      raiseP = Math.min(0.85, raiseP);
+    }
+    const roll = Math.random();
+    if (roll < raiseP){
+      act='raise'; amt = shortStacked && Math.random()<0.6 ? p.bet + p.stack : raiseTo(pickFrac());
+    }
+    else if (roll < raiseP + callP*(1-raiseP)) act='call';
+    else act='fold';
+  }
+  if (act==='raise' && !canRaise){ act = need>0 ? 'call' : 'check'; amt=0; }
+  if (act==='raise' && amt<=G.currentBet){ act='call'; amt=0; }
+  if (act==='raise' && amt>=p.bet+p.stack && !canCheck && perceived<0.72 && Math.random()<0.5){ act='call'; amt=0; }
+  return {act, amt};
 }
 
 function cpuTurn(p, idx){
   after(450*G.speed + Math.random()*250*G.speed, ()=>{
     if (!G || G.players[G.toAct]!==p || p.folded || p.out || !activeCanBet(p)) return;
-    const str = handStrength(p);
-    const err = { easy: 0.28, medium: 0.12, hard: 0.04 }[p.skill] || 0.15;
-    const perceived = Math.max(0, Math.min(1, str + (Math.random()*2-1)*err));
-    const need = G.currentBet - p.bet;
-    const potOdds = need>0 ? need/(G.pot+need) : 0;
-    const aggression = { easy: 0.35, medium: 0.55, hard: 0.75 }[p.skill] || 0.5;
-
-    let act, amt=0;
-    const canCheck = need===0;
-
-    if (perceived < 0.25){
-      act = canCheck ? 'check' : 'fold';
-    } else if (perceived < 0.5){
-      if (canCheck) act = Math.random()<aggression*0.4 ? 'raise' : 'check';
-      else act = (potOdds < perceived + 0.1) ? 'call' : (Math.random()<0.12 ? 'call' : 'fold');
-      if (act==='raise') { amt = G.currentBet + G.minRaise; }
-    } else if (perceived < 0.75){
-      if (canCheck) act = Math.random()<aggression ? 'raise' : 'check';
-      else act = 'call';
-      if (act==='raise') amt = G.currentBet + G.minRaise*2;
-    } else {
-      act = Math.random() < aggression+0.2 ? 'raise' : 'call';
-      amt = Math.random()<0.25 ? p.bet + p.stack : G.currentBet + G.minRaise*(2+Math.floor(Math.random()*3));
-    }
-    if (p.stack <= need && need>0) act = p.stack===need ? 'call' : 'fold';
+    const {act, amt} = decide(p);
     doAction(p, act, amt);
   });
 }
@@ -988,8 +1247,8 @@ function render(){
     const db = G.dealer===i ? '<div class="dealer-btn">D</div>' : '';
     const bet = p.bet>0 ? `<div class="bet-chip">${p.bet} 🍪</div>` : '';
     return `<div class="${cls}" style="${pos}">${bet}
-      <div class="avatar" id="av-${i}">${p.avatar}${db}</div>
-      <div class="name">${p.name}${roleOf(i)}</div><div class="stack">${p.stack} 🍪</div>
+      <div class="avatar" id="av-${i}" onclick="showPlayerInfo(${i})">${p.avatar}${db}</div>
+      <div class="name clickable" onclick="showPlayerInfo(${i})">${p.name}${roleOf(i)}</div><div class="stack">${p.stack} 🍪</div>
       <div class="chippile">${chipstackHTML(p.stack, 6)}</div>
       <div class="hole-cards">${holeHTML}</div></div>`;
   }).join('');
@@ -1008,7 +1267,7 @@ function render(){
       <div class="avatar" id="me-avatar" style="${avatarStyle}${meOut}">${me.avatar}${db}</div>
     </div>
     <div class="pinfo">
-      <div style="background:rgba(0,0,0,.55);border-radius:999px;padding:2px 10px;display:inline-block">You${roleOf(G.players.indexOf(me))}</div>
+      <div style="background:rgba(0,0,0,.55);border-radius:999px;padding:2px 10px;display:inline-block;cursor:pointer" onclick="showPlayerInfo(0)">You${roleOf(G.players.indexOf(me))}</div>
       <div class="stack">${me.stack} 🍪</div>
       <div style="display:flex">${chipstackHTML(me.stack, 4)}</div>
       ${bet}
@@ -1151,6 +1410,59 @@ function buildMenu(){
     render(); startHand();
   };
 }
+/* ---------- Player info popup (personality + reads) ---------- */
+const ARCH_INFO = {
+  lag:     { name:'Maniac 🎢',     desc:'Raises constantly and bluffs way too much. Chaos with chips.', tip:'Call down lighter and let him bluff into your monsters' },
+  shark:   { name:'Shark 🦈',      desc:'Balanced and disciplined. Sizes bets well and rarely makes a mistake.', tip:'Stay unpredictable and trap with slow-plays' },
+  station: { name:'Cookie Jar 🍪', desc:'Rarely bluffs and calls bets she should not. Generous to a fault.', tip:'Never bluff her. Value bet huge, she pays off' },
+  trick:   { name:'Trickster 🎩',  desc:'Plays solid hands but bluffs extra. Raises are about 50/50 value vs bluff.', tip:'Call down more than feels safe' },
+  rock:    { name:'Rock 🪨',       desc:'Folds most hands and almost never bluffs. When he raises, he has it.', tip:'Steal his blinds. If he raises big, fold' }
+};
+function archKeyOf(p){ for (const k in ARCHETYPES) if (ARCHETYPES[k]===p.arch) return k; return 'shark'; }
+let archTimer = null;
+function hidePlayerInfo(){
+  const el = document.getElementById('arch-pop');
+  if (el) el.remove();
+  if (archTimer){ clearTimeout(archTimer); archTimer = null; }
+}
+function showPlayerInfo(i){
+  hidePlayerInfo();
+  const p = G.players[i]; if (!p) return;
+  const info = p.human ? null : ARCH_INFO[archKeyOf(p)];
+  const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
+  const reads = s.hands>=4
+    ? `<div>Enters pots <b>${Math.round(s.vpip/s.hands*100)}%</b> · folds when bet into <b>${s.faceBet?Math.round(s.foldBet/s.faceBet*100):0}%</b> · ${s.hands} hands seen</div>`
+    : `<div style="opacity:.75">Still reading this player...</div>`;
+  const el = document.createElement('div');
+  el.id = 'arch-pop';
+  el.innerHTML = `
+    <div class="ap-head">${p.avatar} <b>${p.name}</b>${p.human ? '' : ' · ' + info.name}</div>
+    ${info ? `<div class="ap-desc">${info.desc}</div><div class="ap-tip">💡 ${info.tip}</div>`
+           : `<div class="ap-desc">Your own stats. The CPUs watch these too, so mix it up!</div>`}
+    <div class="ap-reads">${reads}</div>`;
+  document.body.appendChild(el);
+  const r = (p.human ? document.getElementById('me-avatar') : document.getElementById('av-'+i)).getBoundingClientRect();
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const x = Math.min(Math.max(8, r.left + r.width/2 - w/2), window.innerWidth - w - 8);
+  const y = r.top > h + 14 ? r.top - h - 10 : r.bottom + 10;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  archTimer = setTimeout(hidePlayerInfo, 6000);
+}
+document.addEventListener('click', e=>{
+  const el = document.getElementById('arch-pop');
+  if (el && e.target.closest && !e.target.closest('.name,.avatar,#arch-pop')) hidePlayerInfo();
+});
+
+/* ---------- Help ---------- */
+const helpScreen = document.getElementById('help-screen');
+function showHelp(){ helpScreen.style.display='flex'; }
+function hideHelp(){ helpScreen.style.display='none'; }
+document.getElementById('help-btn').onclick = showHelp;
+document.getElementById('help-mini').onclick = showHelp;
+document.getElementById('help-close').onclick = hideHelp;
+helpScreen.addEventListener('click', e=>{ if (e.target===helpScreen) hideHelp(); });
+window.addEventListener('keydown', e=>{ if (e.key==='Escape') hideHelp(); });
+
 buildMenu();
 </script>
 </body>
