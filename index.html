@@ -296,7 +296,7 @@
   .winner-banner .w-cards { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
   .winner-banner .w-combo {
     display: inline-block; background: #fff; border: 3px solid #333; border-radius: 999px;
-    padding: 5px 18px; font-size: 20px; margin-top: 4px;
+    padding: 5px 18px; font-size: 20px; margin-top: 4px; margin-bottom: 14px;
   }
   @media (max-width: 700px), (max-height: 620px) {
     .avatar { width: 54px; height: 54px; font-size: 30px; }
@@ -1094,7 +1094,7 @@ function addBannerClose(banner){
   if (banner.querySelector('.b-close')) return;
   const close = document.createElement('button');
   close.className = 'cute b-check b-close';
-  close.style.cssText = 'font-size:16px;padding:6px 20px;margin-top:10px;pointer-events:none;';
+  close.style.cssText = 'font-size:16px;padding:6px 20px;margin-top:6px;pointer-events:none;';
   close.textContent = 'Got it ✔';
   banner.appendChild(close);
 }
