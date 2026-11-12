@@ -291,7 +291,7 @@
     box-shadow: 0 8px 0 rgba(0,0,0,.4); transition: transform .35s cubic-bezier(.2,1.8,.4,1);
     text-align: center; max-width: 90vw;
   }
-  .winner-banner.show { transform: translate(-50%,-50%) scale(1); }
+  .winner-banner.show { transform: translate(-50%,-50%) scale(1); cursor: pointer; }
   .winner-banner .w-ava { font-size: 64px; line-height: 1.1; }
   .winner-banner .w-cards { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
   .winner-banner .w-combo {
@@ -1004,22 +1004,7 @@ function showdown(){
   const banner = document.getElementById('banner');
   G.pot=0; G.toAct=-1; render();
   saveGame();
-  // overlay stays until the player closes it; Next Hand only appears after closing
-  after(1200*G.speed, ()=>{
-    if (!banner.classList.contains('show')) return;
-    const close = document.createElement('button');
-    close.className = 'cute b-check'; close.style.fontSize='16px'; close.style.padding='6px 20px'; close.style.marginTop='10px';
-    close.textContent = 'Got it ✔';
-    close.onclick = () => {
-      banner.classList.remove('show');
-      close.remove();
-      document.getElementById('controls').innerHTML='';
-      if (checkGameEnd()) return;
-      const btn=document.createElement('button'); btn.className='cute b-raise'; btn.textContent='Next Hand ▶'; btn.onclick=()=>startHand();
-      document.getElementById('controls').appendChild(btn);
-    };
-    banner.appendChild(close);
-  });
+  // overlay stays until the player closes it (click banner or Got it); Next Hand only appears after closing
 }
 
 // returns true and shows end screen if the game is over (player busted or won everything)
@@ -1100,6 +1085,30 @@ function winBanner(winners, desc, holeCards, comboCards){
     ${comboCards?`<div class="w-cards" style="margin-top:0">${comboCards.map(c=>cardHTML(c)).join('')}</div>`:''}
     ${desc?`<div class="w-combo">${desc}!</div>`:''}`;
   banner.classList.add('show');
+  // close button is there from the start; the whole banner is clickable
+  addBannerClose(banner);
+  banner.onclick = dismissBanner;
+}
+
+function addBannerClose(banner){
+  if (banner.querySelector('.b-close')) return;
+  const close = document.createElement('button');
+  close.className = 'cute b-check b-close';
+  close.style.cssText = 'font-size:16px;padding:6px 20px;margin-top:10px;pointer-events:none;';
+  close.textContent = 'Got it ✔';
+  banner.appendChild(close);
+}
+
+function dismissBanner(){
+  const banner = document.getElementById('banner');
+  if (!banner.classList.contains('show')) return;
+  banner.classList.remove('show');
+  banner.innerHTML = '';
+  banner.onclick = null;
+  document.getElementById('controls').innerHTML='';
+  if (checkGameEnd()) return;
+  const btn=document.createElement('button'); btn.className='cute b-raise'; btn.textContent='Next Hand ▶'; btn.onclick=()=>startHand();
+  document.getElementById('controls').appendChild(btn);
 }
 
 // best 5-card combo out of 7
@@ -1138,21 +1147,6 @@ function awardPot(winners, desc){
   flyChipsToWinners(winners);
   G.pot=0; G.round='showdown'; G.toAct=-1; render();
   saveGame();
-  after(1200*G.speed, ()=>{
-    if (!banner.classList.contains('show')) return;
-    const close = document.createElement('button');
-    close.className = 'cute b-check'; close.style.fontSize='16px'; close.style.padding='6px 20px'; close.style.marginTop='10px';
-    close.textContent = 'Got it ✔';
-    close.onclick = () => {
-      banner.classList.remove('show');
-      close.remove();
-      document.getElementById('controls').innerHTML='';
-      if (checkGameEnd()) return;
-      const btn=document.createElement('button'); btn.className='cute b-raise'; btn.textContent='Next Hand ▶'; btn.onclick=()=>startHand();
-      document.getElementById('controls').appendChild(btn);
-    };
-    banner.appendChild(close);
-  });
 }
 
 function gameOver(){
