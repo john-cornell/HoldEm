@@ -982,11 +982,12 @@ function showdown(){
   const evals = new Map(contenders.map(p=>[p, evalHand([...p.hole, ...G.community])]));
   contenders.forEach(p=>{
     log(`${p.name}: ${p.hole.map(c=>c.r+c.s).join(' ')} → ${CAT_NAMES[evals.get(p)[0]]}`);
-    // showdown memory: everyone sees what everyone showed
+    // showdown memory: everyone sees what everyone showed.
+    // high card only counts as a bluff if it wasn't a missed draw (4-flush / 4-straight)
     const cat = evals.get(p)[0];
     p.shown = p.shown || { n:0, bluffs:0, strong:0 };
     p.shown.n++;
-    if (cat===0) p.shown.bluffs++;
+    if (cat===0 && !countOuts(p)) p.shown.bluffs++;
     else if (cat>=2) p.shown.strong++;
   });
   // build side pots from total contributions
