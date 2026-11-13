@@ -234,6 +234,9 @@
   #arch-pop .ap-desc { opacity: .95; }
   #arch-pop .ap-tip { color: #ffd23f; margin-top: 4px; font-weight: bold; }
   #arch-pop .ap-reads { margin-top: 6px; border-top: 1px dashed rgba(255,255,255,.25); padding-top: 5px; }
+  #arch-pop .ap-stat { margin-bottom: 3px; }
+  #arch-pop .ap-head { cursor: default; }
+  #me-avatar, .pinfo > div { cursor: pointer; }
 
   /* HELP */
   #help-screen {
@@ -1258,7 +1261,7 @@ function render(){
   document.getElementById('player-panel').className = overPanel;
   document.getElementById('player-panel').innerHTML = `
     <div style="position:relative">
-      <div class="avatar" id="me-avatar" style="${avatarStyle}${meOut}">${me.avatar}${db}</div>
+      <div class="avatar" id="me-avatar" style="${avatarStyle}${meOut}" onclick="showPlayerInfo(0)">${me.avatar}${db}</div>
     </div>
     <div class="pinfo">
       <div style="background:rgba(0,0,0,.55);border-radius:999px;padding:2px 10px;display:inline-block;cursor:pointer" onclick="showPlayerInfo(0)">You${roleOf(G.players.indexOf(me))}</div>
@@ -1423,17 +1426,50 @@ function showPlayerInfo(i){
   hidePlayerInfo();
   const p = G.players[i]; if (!p) return;
   const info = p.human ? null : ARCH_INFO[archKeyOf(p)];
-  const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
-  const reads = s.hands>=4
-    ? `<div>Enters pots <b>${Math.round(s.vpip/s.hands*100)}%</b> · folds when bet into <b>${s.faceBet?Math.round(s.foldBet/s.faceBet*100):0}%</b> · ${s.hands} hands seen</div>`
-    : `<div style="opacity:.75">Still reading this player...</div>`;
+  let body;
+  if (p.human){
+    // how the CPUs currently read YOU
+    const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
+    if (s.hands < 4){
+      body = `<div class="ap-desc">Only ${s.hands} hand${s.hands===1?'':'s'} seen so far. Bots need 4 before they form opinions of you, so for now they play you neutral.</div>`;
+    } else {
+      const vpip = s.vpip/s.hands;
+      const fb = s.faceBet ? s.foldBet/s.faceBet : 0.4;
+      let bluffScale = 1;
+      if (vpip>0.45) bluffScale *= 0.4; else if (vpip<0.25) bluffScale *= 1.7;
+      if (fb>0.55) bluffScale *= 1.5; else if (fb<0.25) bluffScale *= 0.45;
+      const respect = (fb<0.3 ? 0.04 : 0) + (vpip<0.25 ? 0.03 : 0);
+      const style = vpip>0.45 ? 'loose' : vpip<0.25 ? 'tight' : 'solid';
+      const betFace = fb>0.55 ? 'spooky' : fb<0.25 ? 'sticky' : 'balanced';
+      let effects = bluffScale<1
+        ? `Bots noticed you rarely fold: they've mostly <b>stopped bluffing you</b> (bluff rate ×${bluffScale.toFixed(2)}) and only bet when they're strong.`
+        : bluffScale>1
+        ? `Bots noticed you fold a lot: they're <b>bluffing you much more</b> (bluff rate ×${bluffScale.toFixed(2)}) and attacking your checks.`
+        : `Your frequencies look balanced: bots have no big exploit against you yet.`;
+      effects += respect>0
+        ? ` When <b>you</b> raise, bots give it extra respect (+${Math.round(respect*100)}% perceived strength) and fold more. Hard bots apply this fully, Easy ones mostly ignore it.`
+        : ` Your bets earn no extra respect: bots call you down at raw odds.`;
+      effects += ` 💡 Counter-play: mix in bluffs and showdowns so no single pattern locks in.`;
+      body = `
+        <div class="ap-stat">Enters pots: <b>${Math.round(vpip*100)}%</b> <span style="opacity:.75">(${style})</span></div>
+        <div class="ap-stat">Folds when bet into: <b>${Math.round(fb*100)}%</b> <span style="opacity:.75">(${betFace})</span></div>
+        <div class="ap-tip">🎭 What the bots do about it:</div>
+        <div class="ap-desc">${effects}</div>`;
+    }
+    body += `<div class="ap-reads">Seen over ${s.hands} hands. The CPUs watch the same numbers, and every bot sees the same view of you.</div>`;
+  } else {
+    const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
+    const reads = s.hands>=4
+      ? `<div>Enters pots <b>${Math.round(s.vpip/s.hands*100)}%</b> · folds when bet into <b>${s.faceBet?Math.round(s.foldBet/s.faceBet*100):0}%</b> · ${s.hands} hands seen</div>`
+      : `<div style="opacity:.75">Still reading this player...</div>`;
+    body = `${info ? `<div class="ap-desc">${info.desc}</div><div class="ap-tip">💡 ${info.tip}</div>` : ''}
+      <div class="ap-reads">${reads}</div>`;
+  }
   const el = document.createElement('div');
   el.id = 'arch-pop';
   el.innerHTML = `
-    <div class="ap-head">${p.avatar} <b>${p.name}</b>${p.human ? '' : ' · ' + info.name}</div>
-    ${info ? `<div class="ap-desc">${info.desc}</div><div class="ap-tip">💡 ${info.tip}</div>`
-           : `<div class="ap-desc">Your own stats. The CPUs watch these too, so mix it up!</div>`}
-    <div class="ap-reads">${reads}</div>`;
+    <div class="ap-head">${p.avatar} <b>${p.name}</b>${p.human ? ' · how the table reads you' : ' · ' + info.name}</div>
+    ${body}`;
   document.body.appendChild(el);
   const r = (p.human ? document.getElementById('me-avatar') : document.getElementById('av-'+i)).getBoundingClientRect();
   const w = el.offsetWidth, h = el.offsetHeight;
