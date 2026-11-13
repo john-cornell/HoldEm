@@ -1462,8 +1462,8 @@ function showPlayerInfo(i){
   const info = p.human ? null : ARCH_INFO[archKeyOf(p)];
   let body;
   if (p.human){
-    // how the CPUs currently read YOU
-    const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
+    // how the CPUs currently read YOU (mirrors oppRead + decide)
+    const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0, pfr:0, aggro:0, postFlop:0 };
     if (s.hands < 4){
       body = `<div class="ap-desc">Only ${s.hands} hand${s.hands===1?'':'s'} seen so far. Bots need 4 before they form opinions of you, so for now they play you neutral.</div>`;
     } else {
@@ -1472,25 +1472,61 @@ function showPlayerInfo(i){
       let bluffScale = 1;
       if (vpip>0.45) bluffScale *= 0.4; else if (vpip<0.25) bluffScale *= 1.7;
       if (fb>0.55) bluffScale *= 1.5; else if (fb<0.25) bluffScale *= 0.45;
-      const respect = (fb<0.3 ? 0.04 : 0) + (vpip<0.25 ? 0.03 : 0);
       const style = vpip>0.45 ? 'loose' : vpip<0.25 ? 'tight' : 'solid';
       const betFace = fb>0.55 ? 'spooky' : fb<0.25 ? 'sticky' : 'balanced';
-      let effects = bluffScale<1
-        ? `Bots noticed you rarely fold: they've mostly <b>stopped bluffing you</b> (bluff rate ×${bluffScale.toFixed(2)}) and only bet when they're strong.`
+      let respect = (fb<0.3 ? 0.04 : 0) + (vpip<0.25 ? 0.03 : 0);
+      const notes = [];
+      const sh = p.shown;
+      if (sh && sh.n>=2){
+        const br = Math.round(sh.bluffs/sh.n*100), sr = Math.round(sh.strong/sh.n*100);
+        if (sh.bluffs/sh.n>0.4){ respect -= 0.04; notes.push(`🃏 Showdowns: ${sh.n} revealed (${br}% bluffs, ${sr}% strong) → they call you down lighter now.`); }
+        else if (sh.strong/sh.n>0.5){ respect += 0.04; notes.push(`🃏 Showdowns: ${sh.n} revealed (${br}% bluffs, ${sr}% strong) → your bets get extra credit.`); }
+        else notes.push(`🃏 Showdowns: ${sh.n} revealed (${br}% bluffs, ${sr}% strong) → mixed, no conclusion yet.`);
+      } else if (sh && sh.n===1){
+        notes.push('🃏 Showdowns: 1 hand revealed. They need 2+ to draw conclusions.');
+      } else {
+        notes.push('🃏 Showdowns: none revealed. They only know your betting frequencies.');
+      }
+      const f = p.form || [];
+      if (f.length>=3 && f.slice(-3).every(x=>x===-1)){
+        respect -= 0.03;
+        notes.push('📉 Form: you have lost 3+ hands in a row → bots expect tilt bluffs and call you more.');
+      } else if (f.length){
+        const wins = f.filter(x=>x===1).length;
+        notes.push(`📉 Form: ${wins} win${wins===1?'':'s'} in your last ${f.length} hands → no tilt read.`);
+      } else {
+        notes.push('📉 Form: no results yet.');
+      }
+      if (s.vpip>=3){
+        const pr = s.pfr/Math.max(1,s.vpip);
+        if (pr>0.6){ respect += 0.02; notes.push(`⬆️ Pre-flop: raise-heavy (${Math.round(pr*100)}% of entries) → your raises get more respect.`); }
+        else notes.push(`⬆️ Pre-flop: ${Math.round(pr*100)}% of your entries are raises → balanced.`);
+      }
+      if ((s.postFlop||0)>=6){
+        const ar = s.aggro/s.postFlop;
+        if (ar>0.35){ respect -= 0.02; notes.push(`🔥 Post-flop: very aggressive (${Math.round(ar*100)}% raise rate) → bots trust your bets less.`); }
+        else if (ar<0.1){ respect += 0.02; notes.push(`🔥 Post-flop: passive (${Math.round(ar*100)}% raise rate) → when you bet, they believe you.`); }
+        else notes.push(`🔥 Post-flop: ${Math.round(ar*100)}% raise rate → balanced.`);
+      }
+      respect = Math.min(0.12, Math.max(-0.06, respect));
+      const bluffTxt = bluffScale<1
+        ? `bots have mostly <b>stopped bluffing you</b> (bluff rate ×${bluffScale.toFixed(2)})`
         : bluffScale>1
-        ? `Bots noticed you fold a lot: they're <b>bluffing you much more</b> (bluff rate ×${bluffScale.toFixed(2)}) and attacking your checks.`
-        : `Your frequencies look balanced: bots have no big exploit against you yet.`;
-      effects += respect>0
-        ? ` When <b>you</b> raise, bots give it extra respect (+${Math.round(respect*100)}% perceived strength) and fold more. Hard bots apply this fully, Easy ones mostly ignore it.`
-        : ` Your bets earn no extra respect: bots call you down at raw odds.`;
-      effects += ` 💡 Counter-play: mix in bluffs and showdowns so no single pattern locks in.`;
+        ? `bots are <b>bluffing you much more</b> (bluff rate ×${bluffScale.toFixed(2)})`
+        : `no strong bluff exploit against you yet`;
+      const respTxt = respect>0.005
+        ? `your bets earn <b>+${Math.round(respect*100)}% extra perceived strength</b> (they fold more to your raises)`
+        : respect<-0.005
+        ? `your bets get <b>${Math.round(-respect*100)}% LESS respect</b> (they call you down lighter)`
+        : `your bets are judged at raw pot odds`;
       body = `
         <div class="ap-stat">Enters pots: <b>${Math.round(vpip*100)}%</b> <span style="opacity:.75">(${style})</span></div>
         <div class="ap-stat">Folds when bet into: <b>${Math.round(fb*100)}%</b> <span style="opacity:.75">(${betFace})</span></div>
-        <div class="ap-tip">🎭 What the bots do about it:</div>
-        <div class="ap-desc">${effects}</div>`;
+        <div class="ap-desc" style="margin-top:6px">${notes.join('</div><div class="ap-desc" style="margin-top:2px">')}</div>
+        <div class="ap-tip">🎭 Net effect: ${bluffTxt}; ${respTxt}.</div>
+        <div class="ap-desc" style="margin-top:4px">Hard bots apply these reads at full strength, Medium at 60%, Easy at 30%. 💡 Counter-play: mix in bluffs and showdowns so no single pattern locks in.</div>
+        <div class="ap-reads">Seen over ${s.hands} hands. Every bot sees this same view of you.</div>`;
     }
-    body += `<div class="ap-reads">Seen over ${s.hands} hands. The CPUs watch the same numbers, and every bot sees the same view of you.</div>`;
   } else {
     const s = p.stats || { hands:0, vpip:0, faceBet:0, foldBet:0 };
     const reads = s.hands>=4
