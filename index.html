@@ -1416,11 +1416,9 @@ const ARCH_INFO = {
   rock:    { name:'Rock 🪨',       desc:'Folds most hands and almost never bluffs. When he raises, he has it.', tip:'Steal his blinds. If he raises big, fold' }
 };
 function archKeyOf(p){ for (const k in ARCHETYPES) if (ARCHETYPES[k]===p.arch) return k; return 'shark'; }
-let archTimer = null;
 function hidePlayerInfo(){
   const el = document.getElementById('arch-pop');
   if (el) el.remove();
-  if (archTimer){ clearTimeout(archTimer); archTimer = null; }
 }
 function showPlayerInfo(i){
   hidePlayerInfo();
@@ -1476,7 +1474,7 @@ function showPlayerInfo(i){
   const x = Math.min(Math.max(8, r.left + r.width/2 - w/2), window.innerWidth - w - 8);
   const y = r.top > h + 14 ? r.top - h - 10 : r.bottom + 10;
   el.style.left = x+'px'; el.style.top = y+'px';
-  archTimer = setTimeout(hidePlayerInfo, 6000);
+  // stays open until you click somewhere else
 }
 document.addEventListener('click', e=>{
   const el = document.getElementById('arch-pop');
