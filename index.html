@@ -594,6 +594,13 @@ function startHand(){
   G.deck = newDeck(); G.community=[]; G.pot=0; G.currentBet=0; G.minRaise=G.bigBlind; G.round='preflop'; G.matchedLevel=0; G.handWin=false; G.handLose=false;
   G.players.forEach(p=>{ p.bet=0; p.folded=false; p.allin=false; p.hole=[]; p.last=''; p.contrib=0; p.quip=null; p.vpipDone=false; p.stats = p.stats || freshStats(); });
   G.players.forEach(p=>{ if (p.stack<=0){ p.out=true; } });
+  // form (win/loss streak) from how the last hand went
+  G.players.forEach(p=>{
+    if (!alive(p)) return;
+    const d = p.stack - (p.prevStack==null ? p.stack : p.prevStack);
+    if (d>0 || d<0){ p.form = (p.form||[]).concat(d>0?1:-1).slice(-5); }
+    p.prevStack = p.stack;
+  });
   G.players.forEach(p=>{ if (alive(p)) p.stats.hands++; });
   const playable = G.players.filter(alive);
   if (playable.length<2 || !alive(G.players[0])){
@@ -695,7 +702,7 @@ function doAction(p, act, amt){
     const s = p.stats;
     if (G.round==='preflop'){
       if (!p.vpipDone && (act==='call'||act==='raise')){ s.vpip++; if (act==='raise') s.pfr++; p.vpipDone=true; }
-    } else if (act==='raise') s.aggro++;
+    } else { s.postFlop = (s.postFlop||0) + 1; if (act==='raise') s.aggro++; }
     if (G.currentBet > p.bet){ s.faceBet++; if (act==='fold') s.foldBet++; }
   }
   if (act==='fold'){ p.folded=true; p.last='fold'; say(p, rand(QUIPS.fold)); log(`${who} folds 👋`); SFX.fold(); }
@@ -808,15 +815,38 @@ function countOuts(p){
   return outs;
 }
 
-/* reads: exploit opponent tendencies (VPIP, fold-to-bet) */
+/* reads: exploit opponent tendencies (VPIP, fold-to-bet, showdown history, form, aggression) */
 function oppRead(p){
   const agg = G.lastRaiser>=0 ? G.players[G.lastRaiser] : null;
   const others = G.players.filter(q=>q!==p && inHand(q) && q.stats && q.stats.hands>=4);
-  const candidates = (agg && agg!==p && inHand(agg) && agg.stats && agg.stats.hands>=4) ? [agg] : others;
-  if (!candidates.length) return { vpip:null, foldBet:null };
-  let vpip=0, fb=0;
-  candidates.forEach(q=>{ vpip += q.stats.vpip/q.stats.hands; fb += q.stats.faceBet ? q.stats.foldBet/q.stats.faceBet : 0.4; });
-  return { vpip: vpip/candidates.length, foldBet: fb/candidates.length };
+  const useAgg = !!(agg && agg!==p && inHand(agg) && agg.stats && agg.stats.hands>=4);
+  const candidates = useAgg ? [agg] : others;
+  if (!candidates.length) return { vpip:null, foldBet:null, respectBonus:0 };
+  const w = { easy:0.3, medium:0.6, hard:1 }[p.skill||'medium'] ?? 0.6;
+  let vpip=0, fb=0, extra=0;
+  candidates.forEach(q=>{
+    vpip += q.stats.vpip/q.stats.hands;
+    fb += q.stats.faceBet ? q.stats.foldBet/q.stats.faceBet : 0.4;
+    if (useAgg){
+      const sh = q.shown;                                    // showdown memory
+      if (sh && sh.n>=2){
+        if (sh.bluffs/sh.n>0.4) extra -= 0.04*w;             // shown bluffs: bet them less
+        if (sh.strong/sh.n>0.5) extra += 0.04*w;             // shown monsters: more respect
+      }
+      const f = q.form;                                      // tilt: 3+ straight losses
+      if (f && f.length>=3 && f.slice(-3).every(x=>x===-1)) extra -= 0.03*w;
+      if (q.stats.vpip>=3 && q.stats.pfr/Math.max(1,q.stats.vpip)>0.6) extra += 0.02*w;  // raise-heavy
+      const pf = q.stats.postFlop||0;                        // post-flop aggression
+      if (pf>=6){
+        const ar = q.stats.aggro/pf;
+        if (ar>0.35) extra -= 0.02*w;
+        else if (ar<0.1) extra += 0.02*w;
+      }
+      if (q.allin && q.bet<=10*G.bigBlind) extra += 0.02*w;  // short-stack shoves get some respect
+    }
+  });
+  const n = candidates.length;
+  return { vpip: vpip/n, foldBet: fb/n, respectBonus: extra };
 }
 
 function decide(p){
@@ -844,7 +874,7 @@ function decide(p){
       respect = (read.foldBet<0.3 ? 0.04 : 0) + (read.vpip<0.25 ? 0.03 : 0);
     }
   }
-  respect = Math.min(0.08, respect * (skill==='hard'?1:skill==='medium'?0.6:0.3));
+  respect = Math.min(0.12, Math.max(-0.06, respect + (read.respectBonus||0)));
   perceived -= respect;
 
   const need = Math.max(0, G.currentBet - p.bet);
@@ -952,6 +982,12 @@ function showdown(){
   const evals = new Map(contenders.map(p=>[p, evalHand([...p.hole, ...G.community])]));
   contenders.forEach(p=>{
     log(`${p.name}: ${p.hole.map(c=>c.r+c.s).join(' ')} → ${CAT_NAMES[evals.get(p)[0]]}`);
+    // showdown memory: everyone sees what everyone showed
+    const cat = evals.get(p)[0];
+    p.shown = p.shown || { n:0, bluffs:0, strong:0 };
+    p.shown.n++;
+    if (cat===0) p.shown.bluffs++;
+    else if (cat>=2) p.shown.strong++;
   });
   // build side pots from total contributions
   const contribs = G.players.map(p=>p.contrib||0);
